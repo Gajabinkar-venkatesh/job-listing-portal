@@ -1,60 +1,34 @@
 const express = require("express");
 const router = express.Router();
-const Job = require("../models/Job");
+const Job = require("../models/job");
 const auth = require("../middleware/auth");
 
-// ✅ CREATE A JOB (Employer only - logged in user)
+// GET all jobs
+router.get("/", async (req, res) => {
+  try {
+    const jobs = await Job.find().sort({ createdAt: -1 });
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// POST add new job (employer)
 router.post("/", auth, async (req, res) => {
   try {
-    const { title, description, skills, experience, salary, location } = req.body;
+    const { title, description, location } = req.body;
 
     const job = new Job({
-      employer: req.user.id,
       title,
       description,
-      skills,
-      experience,
-      salary,
-      location
+      location,
+      company: "Demo Company",
     });
 
     await job.save();
-    res.json(job);
+    res.json({ msg: "Job added successfully" });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-});
-
-// ✅ GET ALL JOBS (Public)
-router.get("/", async (req, res) => {
-  try {
-    const jobs = await Job.find().populate("employer", ["name", "email"]);
-    res.json(jobs);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-});
-
-// ✅ DELETE JOB (Only job owner)
-router.delete("/:id", auth, async (req, res) => {
-  try {
-    const job = await Job.findById(req.params.id);
-
-    if (!job) {
-      return res.status(404).json({ msg: "Job not found" });
-    }
-
-    if (job.employer.toString() !== req.user.id) {
-      return res.status(401).json({ msg: "Not authorized" });
-    }
-
-    await job.deleteOne();
-    res.json({ msg: "Job removed" });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Failed to add job" });
   }
 });
 

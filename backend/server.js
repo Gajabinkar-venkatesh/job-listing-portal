@@ -1,36 +1,29 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const config = require("config");
+const cors = require("cors");
+require("dotenv").config();
 
-// Route files
-const authRoutes = require("./routes/auth");
-const profileRoutes = require("./routes/profile");
-const jobRoutes = require("./routes/Jobs");   // ✅ FIXED (lowercase)
-
-// Initialize app
 const app = express();
-
-// Middleware
+app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
+// MongoDB connection
 mongoose
-  .connect("mongodb://127.0.0.1:27017/jobListingDB")
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.error("MongoDB Error:", err));
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(console.error);
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/profile", profileRoutes);
-app.use("/api/jobs", jobRoutes);
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/jobs", require("./routes/jobs"));
+app.use("/api/applications", require("./routes/applications"));
+app.use("/api/employer", require("./routes/employer"));
 
-// Test Route
+// Test route
 app.get("/", (req, res) => {
-  res.send("✅ Job Listing Portal Backend is Running Perfectly");
+  res.send("Job Listing Portal Backend is Running 🚀");
 });
 
-// Server Start
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
